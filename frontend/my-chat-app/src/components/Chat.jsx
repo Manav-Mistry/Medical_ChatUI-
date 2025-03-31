@@ -1,5 +1,5 @@
-import { useState } from "react";
-import axios from "axios";
+import React, { useState } from "react";
+import "../styles/Chat.css";
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -7,20 +7,22 @@ const Chat = () => {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-
+    
     const userMessage = { sender: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages([...messages, userMessage]);
 
     try {
-      const response = await axios.post("http://localhost:8000/chat", {
-        message: input,
+      const response = await fetch("http://127.0.0.1:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
       });
 
-      const botMessage = { sender: "bot", text: response.data.response };
-      setMessages((prev) => [...prev, botMessage]);
+      const data = await response.json();
+      const botMessage = { sender: "bot", text: data.response };
+      setMessages([...messages, userMessage, botMessage]);
     } catch (error) {
-      console.error("Error sending message:", error);
-      setMessages((prev) => [...prev, { sender: "bot", text: "Error occurred" }]);
+      console.error("Error:", error);
     }
 
     setInput("");
@@ -30,11 +32,24 @@ const Chat = () => {
     <div className="chat-container">
       <div className="chat-box">
         {messages.map((msg, index) => (
-          <div key={index} className={msg.sender}>
-            {msg.text}
+          <div key={index} className={`message ${msg.sender}`}>
+            {msg.text.includes("- ") ? (
+              <ul>
+                {msg.text.split("\n").map((line, i) =>
+                  line.startsWith("- ") ? (
+                    <li key={i}>{line.slice(2)}</li>
+                  ) : (
+                    <p key={i}>{line}</p>
+                  )
+                )}
+              </ul>
+            ) : (
+              <pre>{msg.text}</pre>
+            )}
           </div>
         ))}
       </div>
+
       <div className="input-box">
         <input
           type="text"

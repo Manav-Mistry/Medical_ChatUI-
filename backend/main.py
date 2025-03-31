@@ -30,7 +30,16 @@ async def chat(request: ChatRequest):
         with torch.no_grad():
             outputs = model.generate(**inputs, max_new_tokens=100)
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return {"response": response}
+
+        # Remove the input question from response
+        response_cleaned = response.replace(request.message, "").strip()
+
+        # Formatting for better readability
+        response_formatted = response_cleaned.replace(". ", ".\n")  # New lines after sentences
+        response_formatted = response_formatted.replace("- ", "\n- ")  # Ensure bullet points appear correctly
+        response_formatted = response_formatted.replace("\n\n", "\n")  # Remove excessive new lines
+
+        return {"response": response_formatted}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
