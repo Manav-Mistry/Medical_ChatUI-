@@ -4,12 +4,17 @@ import "../styles/Chat.css";
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);  // State for typing indicator
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    
+
+    // Add user message
     const userMessage = { sender: "user", text: input };
     setMessages([...messages, userMessage]);
+
+    // Show typing indicator
+    setIsTyping(true);
 
     try {
       const response = await fetch("http://127.0.0.1:8000/chat", {
@@ -19,12 +24,19 @@ const Chat = () => {
       });
 
       const data = await response.json();
+      
+      // Add bot response after the message is processed
       const botMessage = { sender: "bot", text: data.response };
+
       setMessages([...messages, userMessage, botMessage]);
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      // Hide typing indicator after receiving response
+      setIsTyping(false);
     }
 
+    // Clear input field
     setInput("");
   };
 
@@ -48,6 +60,13 @@ const Chat = () => {
             )}
           </div>
         ))}
+
+        {/* Show typing indicator when the bot is typing */}
+        {isTyping && (
+          <div className="message bot">
+            <i>typing...</i>
+          </div>
+        )}
       </div>
 
       <div className="input-box">

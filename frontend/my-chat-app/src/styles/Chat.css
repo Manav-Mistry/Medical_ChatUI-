@@ -35,6 +35,13 @@
     align-self: flex-start;
     background: #e6e6e6;
   }
+
+  .message.bot i {
+    font-style: italic;
+    color: #888;
+    text-align: center;
+    font-size: 14px;
+  }
   
   .message pre {
     white-space: pre-wrap;
