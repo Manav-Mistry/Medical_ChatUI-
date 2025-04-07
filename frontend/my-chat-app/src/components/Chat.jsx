@@ -5,6 +5,7 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);  // State for typing indicator
+  const [file, setFile] = useState(null);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -40,6 +41,28 @@ const Chat = () => {
     setInput("");
   };
 
+  const uploadFile = async (e) => {
+    e.preventDefault(); // prevent page reload
+    if (!file) return alert("Please select a file first.");
+  
+    const formData = new FormData();
+    formData.append("file", file);
+  
+    try {
+      console.log("Uploading file:", file.name); // debug
+      const response = await fetch("http://127.0.0.1:8000/upload-note", {
+        method: "POST",
+        body: formData,
+      });
+  
+      const result = await response.json();
+      alert(result.message || "Discharge note uploaded successfully.");
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload file.");
+    }
+  };
+
   return (
     <div className="chat-container">
       <div className="chat-box">
@@ -60,8 +83,6 @@ const Chat = () => {
             )}
           </div>
         ))}
-
-        {/* Show typing indicator when the bot is typing */}
         {isTyping && (
           <div className="message bot">
             <i>typing...</i>
@@ -69,6 +90,17 @@ const Chat = () => {
         )}
       </div>
 
+      {/* Upload section */}
+      <form className="upload-section" onSubmit={uploadFile}>
+        <input
+          type="file"
+          accept=".txt"
+          onChange={(e) => setFile(e.target.files[0])}
+        />
+        <button type="submit">Upload</button>
+      </form>
+
+      {/* Chat input */}
       <div className="input-box">
         <input
           type="text"
