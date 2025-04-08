@@ -64,62 +64,54 @@ const Chat = () => {
   };
 
   return (
-    <div className="main-container">
-      {/* Left panel: Upload form */}
-      <div className="upload-panel">
-        <form className="upload-section" onSubmit={uploadFile}>
-          <h3>Upload Discharge Note</h3>
-          <input
-            type="file"
-            accept=".txt"
-            onChange={(e) => setFile(e.target.files[0])}
-          />
-          <button type="submit">Upload</button>
-        </form>
+    <div className="chat-container">
+      <div className="chat-box">
+        {messages.map((msg, index) => (
+          <div key={index} className={`message ${msg.sender}`}>
+            {msg.text.includes("- ") ? (
+              <ul>
+                {msg.text.split("\n").map((line, i) =>
+                  line.startsWith("- ") ? (
+                    <li key={i}>{line.slice(2)}</li>
+                  ) : (
+                    <p key={i}>{line}</p>
+                  )
+                )}
+              </ul>
+            ) : (
+              <pre>{msg.text}</pre>
+            )}
+          </div>
+        ))}
+        {isTyping && (
+          <div className="message bot">
+            <i>typing...</i>
+          </div>
+        )}
       </div>
-  
-      {/* Right panel: Chat UI */}
-      <div className="chat-container">
-      {/* <h2 style={{ textAlign: "center" }}>Chat with LLM</h2> */}
-        <div className="chat-box">
-          {messages.map((msg, index) => (
-            <div key={index} className={`message ${msg.sender}`}>
-              {msg.text.includes("- ") ? (
-                <ul>
-                  {msg.text.split("\n").map((line, i) =>
-                    line.startsWith("- ") ? (
-                      <li key={i}>{line.slice(2)}</li>
-                    ) : (
-                      <p key={i}>{line}</p>
-                    )
-                  )}
-                </ul>
-              ) : (
-                <div>{msg.text}</div>
-              )}
-            </div>
-          ))}
-          {isTyping && (
-            <div className="message bot">
-              <i>typing...</i>
-            </div>
-          )}
-        </div>
-  
-        <div className="input-box">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
-          />
-          <button onClick={sendMessage}>Send</button>
-        </div>
+
+      {/* Upload section */}
+      <form className="upload-section" onSubmit={uploadFile}>
+        <input
+          type="file"
+          accept=".txt"
+          onChange={(e) => setFile(e.target.files[0])}
+        />
+        <button type="submit">Upload</button>
+      </form>
+
+      {/* Chat input */}
+      <div className="input-box">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+        />
+        <button onClick={sendMessage}>Send</button>
       </div>
     </div>
   );
-
-  
 };
 
 export default Chat;
