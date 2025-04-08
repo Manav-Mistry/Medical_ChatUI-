@@ -95,7 +95,7 @@ const Chat = () => {
                   )}
                 </ul>
               ) : (
-                <pre>{msg.text}</pre>
+                <div>{msg.text}</div>
               )}
             </div>
           ))}
