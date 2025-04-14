@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import "../styles/Chat.css";
 
-const ExpertChat = () => {
+const ExpertChat = ({userId}) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [ws, setWs] = useState(null);
   const [note, setNote] = useState(""); // for discharge note
 
-  const expertId = "expert1"; // dynamically assigned later
+  // const expertId = "expert1"; // dynamically assigned later
 
   useEffect(() => {
-    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/expert?user_id=${expertId}`);
+    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/expert?user_id=${userId}`);
 
     socket.onopen = () => console.log("Connected to Expert WebSocket");
 

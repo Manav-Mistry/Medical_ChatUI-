@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../styles/Chat.css";
 
-const PatientChat = () => {
+const PatientChat = ({userId}) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [mode, setMode] = useState("expert"); // 'expert' or 'llm'
@@ -11,7 +11,7 @@ const PatientChat = () => {
 
 
   // user id
-  const userId = "patient1";
+  // const userId = "patient6";
 
   // Setup WebSocket when mode changes
   useEffect(() => {

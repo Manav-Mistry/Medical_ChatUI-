@@ -246,6 +246,80 @@ input:focus {
   background-color: #357ab8;
 }
 
+/* Login */
+
+.outer-login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;  /* centers horizontally */
+  align-items: center;
+}
+
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid black;
+  border-radius: 10px;
+  background-color: #f9f9f9;
+  text-align: center;
+  box-shadow: 0 10px 10px rgba(0,0,0,0.1); 
+  height: 20vh;  
+  width: 30vw;
+}
+
+.login-container button {
+  margin-top: 1.5rem;
+  padding: 10px 20px;
+  background-color: #4a90e2;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.login-container h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.login-container label {
+  font-size: 1rem;
+  margin: 0 10px;
+  color: #444;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.login-container input[type="radio"] {
+  margin-right: 8px;
+  accent-color: #4a90e2; /* blue */
+  transform: scale(1.2);
+}
+
+.login-container input[type="text"] {
+  width: 90%;
+  padding: 10px;
+  margin-top: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: small;
+  outline: none;
+  transition: border 0.2s ease-in-out;
+}
+
+.login-container input[type="text"]:focus {
+  border-color: #4a90e2;
+  /* width: 2rem; */
+}
+
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .main-container {
