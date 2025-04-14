@@ -4,37 +4,51 @@ import "../styles/Chat.css";
 const PatientChat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [mode, setMode] = useState("expert"); // "expert" or "llm"
   const [ws, setWs] = useState(null);
 
   useEffect(() => {
-    // Toggle ws/chat to ws/expert to expect answer from expert
-    const socket = new WebSocket("ws://127.0.0.1:8000/ws/patient");
-    
-    socket.onopen = () => console.log("Connected to Patient WebSocket");
-    socket.onclose = () => console.log("Disconnected from Patient WebSocket");
-    socket.onerror = (error) => console.error("WebSocket error:", error);
+    // Dynamically choose the WebSocket endpoint
+    const endpoint =
+      mode === "expert"
+        ? "ws://127.0.0.1:8000/ws/patient"
+        : "ws://127.0.0.1:8000/ws/llm";
+
+    const socket = new WebSocket(endpoint);
+
+    socket.onopen = () => {
+      console.log(`Connected to ${mode.toUpperCase()} WebSocket`);
+    };
 
     socket.onmessage = (event) => {
-      const data = event.data;
-      const expertMessage = { sender: "expert", text: data };
-      setMessages(prevMessages => [...prevMessages, expertMessage]);
+      const sender = mode === "expert" ? "expert" : "llm";
+      const message = { sender, text: event.data };
+      setMessages((prevMessages) => [...prevMessages, message]);
+    };
+
+    socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    socket.onclose = () => {
+      console.log(`${mode.toUpperCase()} WebSocket disconnected`);
     };
 
     setWs(socket);
 
+    // Cleanup on unmount or mode change
     return () => {
-        if (socket.readyState === WebSocket.OPEN) {  // Ensure socket is open before closing
-            socket.close();
-            console.log("Closed Expert WebSocket connection");
-        }
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
     };
-  }, []);
+  }, [mode]);
 
   const sendMessage = () => {
-    if (!input.trim() || !ws) return;
+    if (!input.trim() || !ws || ws.readyState !== WebSocket.OPEN) return;
 
-    const patientMessage = { sender: "patient", text: input };
-    setMessages([...messages, patientMessage]);
+    const userMessage = { sender: "patient", text: input };
+    setMessages((prev) => [...prev, userMessage]);
 
     ws.send(input);
     setInput("");
@@ -42,6 +56,35 @@ const PatientChat = () => {
 
   return (
     <div className="main-container">
+      {/* Mode Toggle */}
+      <div className="mode-toggle">
+        <label>
+          <input
+            type="radio"
+            value="expert"
+            checked={mode === "expert"}
+            onChange={() => {
+              setMessages([]);
+              setMode("expert");
+            }}
+          />
+          Talk to Human Expert
+        </label>
+        <label>
+          <input
+            type="radio"
+            value="llm"
+            checked={mode === "llm"}
+            onChange={() => {
+              setMessages([]);
+              setMode("llm");
+            }}
+          />
+          Talk to LLM (AI)
+        </label>
+      </div>
+
+      {/* Chat UI */}
       <div className="chat-container">
         <div className="chat-box">
           {messages.map((msg, index) => (
@@ -50,7 +93,7 @@ const PatientChat = () => {
             </div>
           ))}
         </div>
-  
+
         <div className="input-box">
           <input
             type="text"
