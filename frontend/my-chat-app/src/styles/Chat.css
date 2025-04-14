@@ -23,6 +23,23 @@ body {
   gap: 30px;
 }
 
+/* Discharge Note Section */
+
+.discharge-note-section {
+  height: 60vh;
+  width: 40%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px;
+  border-radius: 1rem 1rem 1rem 1rem;
+  background-color: #eafcff;
+  border: 1px solid #ccc;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+
 /* Upload Panel */
 .upload-panel {
   flex-basis: 25%;
@@ -88,6 +105,31 @@ body {
   overflow-y: auto;
 }
 
+/* For exxpert */
+
+.chat-container-expert {
+  /* flex-basis: 70%; */
+  /* max-width: 800px;
+  min-height: 37rem; */
+  width: 50%;
+  height: 30rem;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.chat-box-expert {
+  display: flex;
+  flex-direction: column;
+  gap: 5px; 
+  margin: 2rem;
+  padding: 20px;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
 /* .chat-box {
   display: flex;
   flex-direction: column;
@@ -139,13 +181,13 @@ body {
   box-sizing: border-box;
 } */
 
-.message.user {
+.message.patient{
   background-color: #d1f0d1;
   align-self: flex-end;
   /* width: fit-content; */
 }
 
-.message.bot {
+.message.llm, .message.expert{
   background-color: #e9f1f7;
   align-self: flex-start;
   /* width: fit-content; */
