@@ -4,12 +4,18 @@ import "../styles/Chat.css";
 const PatientChat = ({userId}) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [mode, setMode] = useState("expert"); // 'expert' or 'llm'
+  // const [mode, setMode] = useState("expert"); // 'expert' or 'llm'
   const [ws, setWs] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [file, setFile] = useState(null);
 
+  const initialMode = userId.startsWith("patient6") ||
+                    userId.startsWith("patient7") ||
+                    userId.startsWith("patient8") ||
+                    userId.startsWith("patient9") ||
+                    userId.startsWith("patient10") ? "llm" : "expert";
 
+  const [mode, setMode] = useState(initialMode);
   // user id
   // const userId = "patient6";
 
