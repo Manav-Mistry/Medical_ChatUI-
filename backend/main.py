@@ -24,19 +24,22 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 
 # ====== LLM Model Setup ======
-MODEL_PATH = "/home/manav/merged_model"
+# MODEL_PATH = "/home/manav/merged_model"
+MODEL_PATH = "/home/wjang/2024_chatbot_noteaid/model/gguf/ppo/chatbot1"
+
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 model = AutoModelForCausalLM.from_pretrained(MODEL_PATH, device_map="auto")
 
-system_prompt_template = "You are a helpful medical educator agent. You will generate short and easy to understand chat."
+system_prompt_template = "You are a medical expert who is having a conversation with a patient to help them understand the key details of their discharge note. You will explain their diagnosis, treatment plan, medications, procedures during the hospital stay and follow-up instructions in a clear and supportive manner. Your dialogue will be 1-2 sentences in length, and you should encourage the patient to ask questions if anything is unclear."
+
 generation_config = {
     "max_new_tokens": 100,
     "repetition_penalty": 1.2,
     "top_k": 50,
     "temperature": 0.2,
     "early_stopping": True,
-    "num_beams": 5,
-    "eos_token_id": tokenizer.convert_tokens_to_ids("<EOC>")
+    "num_beams": 10,
+    # "eos_token_id": tokenizer.convert_tokens_to_ids("<EOC>")
 }
 
 # ====== Session Stores ======
@@ -102,6 +105,7 @@ async def patient_socket(websocket: WebSocket):
                 chat = [system_message] + history
 
                 tokenized = tokenizer.apply_chat_template(chat, tokenize=True, add_generation_prompt=True, return_tensors="pt").cuda()
+                tokenizer.pad_token_id = tokenizer.eos_token_id
                 output_ids = model.generate(tokenized, **generation_config)
                 start = tokenized.shape[1]
                 reply = tokenizer.batch_decode(output_ids[:, start:], skip_special_tokens=True)[0]
@@ -109,8 +113,8 @@ async def patient_socket(websocket: WebSocket):
                 history.append({"role": "assistant", "content": reply})
 
                 # Setting Delay 20wpm
-                delay = min(20, len(reply) * 0.05)
-                await asyncio.sleep(delay)
+                # delay = min(20, len(reply) * 0.05)
+                # await asyncio.sleep(delay)
 
                 await websocket.send_text(reply)
 
