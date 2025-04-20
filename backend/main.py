@@ -25,7 +25,9 @@ logging.basicConfig(level=logging.INFO)
 
 # ====== LLM Model Setup ======
 # MODEL_PATH = "/home/manav/merged_model"
-MODEL_PATH = "/home/wjang/2024_chatbot_noteaid/model/gguf/ppo/chatbot1"
+# MODEL_PATH = "/home/wjang/2024_chatbot_noteaid/model/gguf/ppo/chatbot1"
+MODEL_PATH = "memy85/chatbot_noteaid_ppo"
+
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 model = AutoModelForCausalLM.from_pretrained(MODEL_PATH, device_map="auto")
