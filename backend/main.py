@@ -1,18 +1,11 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import logging, os, torch
+import logging, os, asyncio, requests
 from typing import Dict
-import asyncio
 
-# ====== Setup ======
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-
+# ====== FastAPI Setup ======
 app = FastAPI()
 
-# CORS config
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,26 +16,15 @@ app.add_middleware(
 
 logging.basicConfig(level=logging.INFO)
 
-# ====== LLM Model Setup ======
-# MODEL_PATH = "/home/manav/merged_model"
-# MODEL_PATH = "/home/wjang/2024_chatbot_noteaid/model/gguf/ppo/chatbot1"
-MODEL_PATH = "memy85/chatbot_noteaid_ppo"
+# ====== Config ======
+LLM_API_URL = "https://a99e-129-63-116-34.ngrok-free.app/chat"
 
-
-tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
-model = AutoModelForCausalLM.from_pretrained(MODEL_PATH, device_map="auto")
-
-system_prompt_template = "You are a medical expert who is having a conversation with a patient to help them understand the key details of their discharge note. You will explain their diagnosis, treatment plan, medications, procedures during the hospital stay and follow-up instructions in a clear and supportive manner. Your dialogue will be 1-2 sentences in length, and you should encourage the patient to ask questions if anything is unclear."
-
-generation_config = {
-    "max_new_tokens": 100,
-    "repetition_penalty": 1.2,
-    "top_k": 50,
-    "temperature": 0.2,
-    "early_stopping": True,
-    "num_beams": 10,
-    # "eos_token_id": tokenizer.convert_tokens_to_ids("<EOC>")
-}
+system_prompt_template = (
+    "You are a medical expert who is having a conversation with a patient to help them understand the key details "
+    "of their discharge note. You will explain their diagnosis, treatment plan, medications, procedures during the "
+    "hospital stay and follow-up instructions in a clear and supportive manner. Your dialogue will be 1-2 sentences "
+    "in length, and you should encourage the patient to ask questions if anything is unclear."
+)
 
 # ====== Session Stores ======
 patient_connections: Dict[str, WebSocket] = {}
@@ -81,7 +63,6 @@ async def upload_note(file: UploadFile = File(...), patient_id: str = ""):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # ====== Patient WebSocket ======
 @app.websocket("/ws/patient")
 async def patient_socket(websocket: WebSocket):
@@ -94,38 +75,36 @@ async def patient_socket(websocket: WebSocket):
         while True:
             msg = await websocket.receive_text()
 
-            # LLM-based patient
             if patient_id in llm_patients:
+                # Handle LLM chat via /chat
                 history = llm_histories.setdefault(patient_id, [])
                 history.append({"role": "user", "content": msg})
-
                 note = discharge_notes.get(patient_id, "")
-                system_message = {
-                    "role": "system",
-                    "content": f"{system_prompt_template}\n\nDischarge Note:\n{note}"
-                }
-                chat = [system_message] + history
 
-                tokenized = tokenizer.apply_chat_template(chat, tokenize=True, add_generation_prompt=True, return_tensors="pt").cuda()
-                tokenizer.pad_token_id = tokenizer.eos_token_id
-                output_ids = model.generate(tokenized, **generation_config)
-                start = tokenized.shape[1]
-                reply = tokenizer.batch_decode(output_ids[:, start:], skip_special_tokens=True)[0]
+                try:
+                    response = requests.post(
+                        LLM_API_URL,
+                        json={
+                            "note": note,
+                            "message": msg,
+                            "history": history
+                        },
+                        timeout=15
+                    )
+                    response.raise_for_status()
+                    reply = response.json().get("reply", "[Empty reply]")
+                except Exception as e:
+                    logging.exception("LLM API call failed")
+                    reply = f"[Error fetching LLM response: {str(e)}]"
 
                 history.append({"role": "assistant", "content": reply})
-
-                # Setting Delay 20wpm
-                # delay = min(20, len(reply) * 0.05)
-                # await asyncio.sleep(delay)
-
                 await websocket.send_text(reply)
 
-            # Human expert pairing
             elif patient_id in pairings:
                 expert_id = pairings[patient_id]
                 expert_ws = expert_connections.get(expert_id)
                 if expert_ws:
-                    await expert_ws.send_text(f"{msg}")
+                    await expert_ws.send_text(msg)
                 else:
                     await websocket.send_text("No expert available.")
             else:
@@ -143,7 +122,7 @@ async def expert_socket(websocket: WebSocket):
     expert_connections[expert_id] = websocket
     logging.info(f"Expert {expert_id} connected.")
 
-    # On connect, send patient note if paired
+    # Send existing note if paired
     patient_id = next((p for p, e in pairings.items() if e == expert_id), None)
     if patient_id:
         note = discharge_notes.get(patient_id)
@@ -157,7 +136,7 @@ async def expert_socket(websocket: WebSocket):
             if patient_id:
                 patient_ws = patient_connections.get(patient_id)
                 if patient_ws:
-                    await patient_ws.send_text(f"{msg}")
+                    await patient_ws.send_text(msg)
                 else:
                     await websocket.send_text("Patient disconnected.")
             else:
