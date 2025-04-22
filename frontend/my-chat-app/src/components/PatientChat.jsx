@@ -1,69 +1,66 @@
 import React, { useState, useEffect } from "react";
 import "../styles/Chat.css";
 
-const PatientChat = ({userId}) => {
+const PatientChat = ({ userId }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  // const [mode, setMode] = useState("expert"); // 'expert' or 'llm'
   const [ws, setWs] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [file, setFile] = useState(null);
 
-  const initialMode = userId.startsWith("patient6") ||
-                    userId.startsWith("patient7") ||
-                    userId.startsWith("patient8") ||
-                    userId.startsWith("patient9") ||
-                    userId.startsWith("patient10") ? "llm" : "expert";
+  // Set backend URL (you can load from .env or config later)
+  const BACKEND_URL = "https://medical-chatui.onrender.com";
+  const BACKEND_WS = "wss://medical-chatui.onrender.com";
 
-  const [mode, setMode] = useState(initialMode);
-  // user id
-  // const userId = "patient6";
+  // Determine mode (LLM or expert) from user ID
+  const initialMode =
+    userId.startsWith("patient6") ||
+    userId.startsWith("patient7") ||
+    userId.startsWith("patient8") ||
+    userId.startsWith("patient9") ||
+    userId.startsWith("patient10")
+      ? "llm"
+      : "expert";
 
-  // Setup WebSocket when mode changes
+  const [mode] = useState(initialMode);
+
+  // Setup WebSocket connection
   useEffect(() => {
-    let socket = null;
+    const endpoint = `${BACKEND_WS}/ws/patient?user_id=${userId}`;
+    const socket = new WebSocket(endpoint);
 
-    const connectSocket = () => {
-      const endpoint = `ws://127.0.0.1:8000/ws/patient?user_id=${userId}`;
-      socket = new WebSocket(endpoint);
-
-      socket.onopen = () => {
-        console.log(`Connected to ${mode.toUpperCase()} WebSocket`);
-        setWs(socket); // save the socket for sending
-      };
-
-      socket.onmessage = (event) => {
-        const sender = mode === "expert" ? "expert" : "llm";
-        setMessages((prev) => [...prev, { sender, text: event.data }]);
-        setIsTyping(false);
-      };
-
-      socket.onerror = (error) => console.error("WebSocket error:", error);
-      socket.onclose = () => console.log("WebSocket closed");
+    socket.onopen = () => {
+      console.log(`Connected to ${mode.toUpperCase()} WebSocket`);
+      setWs(socket);
     };
 
-    connectSocket();
+    socket.onmessage = (event) => {
+      const sender = mode === "expert" ? "expert" : "llm";
+      setMessages((prev) => [...prev, { sender, text: event.data }]);
+      setIsTyping(false);
+    };
+
+    socket.onerror = (error) => console.error("WebSocket error:", error);
+    socket.onclose = () => console.log("WebSocket closed");
 
     return () => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
+      if (socket.readyState === WebSocket.OPEN) {
         socket.close();
       }
     };
-  }, []); // ✅ Run only once when component mounts
+  }, [userId, mode]);
 
-
-  // Send message
+  // Send chat message
   const sendMessage = () => {
     if (!input.trim() || !ws || ws.readyState !== WebSocket.OPEN) return;
 
-    const patientMessage = { sender: "patient", text: input };
-    setMessages((prev) => [...prev, patientMessage]);
+    setMessages((prev) => [...prev, { sender: "patient", text: input }]);
     setIsTyping(true);
     ws.send(input);
     setInput("");
   };
 
-  // Upload file (discharge note)
+  // Upload discharge note file
   const uploadFile = async (e) => {
     e.preventDefault();
     if (!file) return alert("Please select a file first.");
@@ -73,10 +70,9 @@ const PatientChat = ({userId}) => {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/upload-note?patient_id=${userId}`,
+        `${BACKEND_URL}/upload-note?patient_id=${userId}`,
         { method: "POST", body: formData }
       );
-
       const result = await response.json();
       alert(result.message || "Discharge note uploaded successfully.");
     } catch (error) {
@@ -87,7 +83,7 @@ const PatientChat = ({userId}) => {
 
   return (
     <div className="main-container">
-      {/* Left panel: Upload form + mode toggle */}
+      {/* Upload panel */}
       <div className="upload-panel">
         <form className="upload-section" onSubmit={uploadFile}>
           <h3>Upload Discharge Note</h3>
@@ -98,37 +94,9 @@ const PatientChat = ({userId}) => {
           />
           <button type="submit">Upload</button>
         </form>
-
-        {/* <div className="mode-toggle">
-          <h3>Chat Mode</h3>
-          <label>
-            <input
-              type="radio"
-              value="expert"
-              checked={mode === "expert"}
-              onChange={() => {
-                setMessages([]);
-                setMode("expert");
-              }}
-            />
-            Talk to Human Expert
-          </label>
-          <label>
-            <input
-              type="radio"
-              value="llm"
-              checked={mode === "llm"}
-              onChange={() => {
-                setMessages([]);
-                setMode("llm");
-              }}
-            />
-            Talk to LLM (AI)
-          </label>
-        </div> */}
       </div>
 
-      {/* Right panel: Chat UI */}
+      {/* Chat container */}
       <div className="chat-container">
         <div className="chat-box">
           {messages.map((msg, index) => (
@@ -148,7 +116,6 @@ const PatientChat = ({userId}) => {
               )}
             </div>
           ))}
-
           {isTyping && (
             <div className="message bot">
               <i>typing...</i>
@@ -156,6 +123,7 @@ const PatientChat = ({userId}) => {
           )}
         </div>
 
+        {/* Input field */}
         <div className="input-box">
           <input
             type="text"
