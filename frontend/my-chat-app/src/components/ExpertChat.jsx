@@ -8,9 +8,11 @@ const ExpertChat = ({userId}) => {
   const [note, setNote] = useState(""); // for discharge note
 
   // const expertId = "expert1"; // dynamically assigned later
+  const BACKEND_WS = "wss://medical-chatui.onrender.com";
+
 
   useEffect(() => {
-    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/expert?user_id=${userId}`);
+    const socket = new WebSocket(`${BACKEND_WS}/ws/expert?user_id=${userId}`);
 
     socket.onopen = () => console.log("Connected to Expert WebSocket");
 
@@ -31,6 +33,7 @@ const ExpertChat = ({userId}) => {
     socket.onclose = () => console.log("Disconnected from Expert WebSocket");
 
     setWs(socket);
+    print("Inside connection code")
 
     return () => {
       if (socket.readyState === WebSocket.OPEN) {
