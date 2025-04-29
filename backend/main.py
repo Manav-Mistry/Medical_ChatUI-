@@ -17,7 +17,7 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 
 # ====== Config ======
-LLM_API_URL = "https://f8e7-129-63-116-34.ngrok-free.app/chat"
+LLM_API_URL = "https://74a7-129-63-116-34.ngrok-free.app/chat"
 
 system_prompt_template = (
     "You are a medical expert who is having a conversation with a patient to help them understand the key details "
