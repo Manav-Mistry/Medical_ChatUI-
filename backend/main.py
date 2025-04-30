@@ -89,7 +89,7 @@ async def patient_socket(websocket: WebSocket):
                             "message": msg,
                             "history": history
                         },
-                        timeout=15
+                        timeout=45
                     )
                     response.raise_for_status()
                     reply = response.json().get("reply", "[Empty reply]")
